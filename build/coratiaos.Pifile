@@ -94,10 +94,7 @@ RUN mkdir -p /usr/coratiaos/config
 # ── Load Docker image if pre-built ──
 # If a pre-built Docker image tar is available, load it to avoid
 # needing an internet connection on first boot
-RUN if [ -f /opt/coratiaos/coratiaos-core.tar ]; then \
-        docker load < /opt/coratiaos/coratiaos-core.tar && \
-        rm /opt/coratiaos/coratiaos-core.tar; \
-    fi
+RUN test -f /opt/coratiaos/coratiaos-core.tar && docker load < /opt/coratiaos/coratiaos-core.tar && rm /opt/coratiaos/coratiaos-core.tar || true
 
 # ── Systemd Service ──
 RUN cat > /etc/systemd/system/coratiaos-bootstrap.service <<'SVCEOF'

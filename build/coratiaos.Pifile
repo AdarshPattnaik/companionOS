@@ -96,7 +96,7 @@ RUN mkdir -p /opt/coratiaos
 # pimod will skip or fail depending on config. But to be safe, we'll just run
 # a script that conditionally loads it if the file was successfully copied.
 COPY build/docker-image/coratiaos-core.tar /opt/coratiaos/coratiaos-core.tar || true
-RUN if [ -f /opt/coratiaos/coratiaos-core.tar ]; then docker load -i /opt/coratiaos/coratiaos-core.tar && rm /opt/coratiaos/coratiaos-core.tar; fi || true
+RUN bash -c "if [ -f /opt/coratiaos/coratiaos-core.tar ]; then docker load -i /opt/coratiaos/coratiaos-core.tar && rm /opt/coratiaos/coratiaos-core.tar; fi"
 
 # ── Systemd Service ──
 RUN cat > /etc/systemd/system/coratiaos-bootstrap.service <<'SVCEOF'

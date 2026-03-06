@@ -60,12 +60,17 @@ RUN ARCH=$(dpkg --print-architecture) && \
     -o /usr/local/bin/ttyd && \
     chmod +x /usr/local/bin/ttyd \
     || echo "ttyd install skipped (unsupported arch)"
+# Build tools needed for C extensions (psutil, pymavlink, etc.)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    python3-dev \
+    && rm -rf /var/lib/apt/lists/*
 
 # Python dependencies
 COPY core/libs /home/coratiaos/libs
 RUN pip install --no-cache-dir \
-    fastapi[all] \
-    uvicorn[standard] \
+    fastapi \
+    uvicorn \
     aiohttp \
     aiofiles \
     docker \
@@ -76,14 +81,20 @@ RUN pip install --no-cache-dir \
     pydantic \
     requests \
     websockets \
-    netifaces \
     packaging \
-    appdirs
+    appdirs \
+    python-multipart \
+    jinja2
 
 # Install local libraries
 RUN pip install --no-cache-dir \
     /home/coratiaos/libs/commonwealth \
     /home/coratiaos/libs/bridges
+
+# Remove build tools to reduce image size
+RUN apt-get purge -y build-essential python3-dev \
+    && apt-get autoremove -y \
+    && rm -rf /var/lib/apt/lists/*
 
 # Copy services
 COPY core/services /home/coratiaos/services

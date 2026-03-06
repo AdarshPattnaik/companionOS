@@ -93,7 +93,7 @@ class Bootstrapper:
     def start(self, config: dict[str, Any]) -> bool:
         """Start the core container from config."""
         core_config = config.get("core", {})
-        image = core_config.get("image", "coratia/coratiaos-core:stable")
+        image = core_config.get("image", "adarshnemesis/coratiaos-core:stable")
         tag = core_config.get("tag", "stable")
         full_image = f"{image}:{tag}" if ":" not in image else image
 

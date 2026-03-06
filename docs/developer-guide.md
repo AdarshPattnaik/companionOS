@@ -111,7 +111,7 @@ if __name__ == "__main__":
 
 ```bash
 # Build core image
-docker build -t coratia/coratiaos-core:local -f core/Dockerfile .
+docker build -t adarshnemesis/coratiaos-core:local -f core/Dockerfile .
 
 # Run with compose
 cd core/compose

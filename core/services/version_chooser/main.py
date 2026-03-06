@@ -31,7 +31,7 @@ app = create_app(title="Version Chooser", description="CoratiaOS version and upd
 async def get_current_version() -> dict:
     """Get the currently running version."""
     return {
-        "repository": "coratia/coratiaos-core",
+        "repository": "adarshnemesis/coratiaos-core",
         "tag": "stable",
         "version": "1.0.0",
         "sha": "local-dev",
@@ -44,7 +44,7 @@ async def list_local_versions() -> list[VersionInfo]:
     """List locally available versions."""
     return [
         VersionInfo(
-            repository="coratia/coratiaos-core",
+            repository="adarshnemesis/coratiaos-core",
             tag="stable",
             is_current=True,
             is_local=True,
@@ -56,9 +56,9 @@ async def list_local_versions() -> list[VersionInfo]:
 async def list_remote_versions() -> list[VersionInfo]:
     """List available remote versions."""
     return [
-        VersionInfo(repository="coratia/coratiaos-core", tag="stable", is_local=False),
-        VersionInfo(repository="coratia/coratiaos-core", tag="beta", is_local=False),
-        VersionInfo(repository="coratia/coratiaos-core", tag="master", is_local=False),
+        VersionInfo(repository="adarshnemesis/coratiaos-core", tag="stable", is_local=False),
+        VersionInfo(repository="adarshnemesis/coratiaos-core", tag="beta", is_local=False),
+        VersionInfo(repository="adarshnemesis/coratiaos-core", tag="master", is_local=False),
     ]
 
 

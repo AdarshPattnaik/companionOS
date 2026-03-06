@@ -1,6 +1,6 @@
 {
     "core": {
-        "image": "coratia/coratiaos-core",
+        "image": "adarshnemesis/coratiaos-core",
         "tag": "stable",
         "network": "host",
         "privileged": true,

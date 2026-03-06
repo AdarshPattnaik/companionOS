@@ -37,7 +37,7 @@ static ip_address=192.168.2.2/24
 EOF
 
 # 4. Build or pull
-docker pull coratia/coratiaos-core:stable
+docker pull adarshnemesis/coratiaos-core:stable
 
 # 5. Start bootstrap
 python3 bootstrap/main.py &
@@ -71,7 +71,7 @@ From the web dashboard: **Version** → **Check Updates** → **Update**
 Or via command line:
 
 ```bash
-docker pull coratia/coratiaos-core:stable
+docker pull adarshnemesis/coratiaos-core:stable
 sudo systemctl restart coratiaos-bootstrap
 ```
 

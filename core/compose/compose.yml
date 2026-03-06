@@ -8,7 +8,7 @@ version: "3.8"
 
 services:
   coratiaos-core:
-    image: coratia/coratiaos-core:local
+    image: adarshnemesis/coratiaos-core:local
     build:
       context: ../../
       dockerfile: core/Dockerfile

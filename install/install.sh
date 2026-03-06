@@ -8,7 +8,7 @@
 set -e
 
 CORATIAOS_VERSION="${CORATIAOS_VERSION:-stable}"
-CORATIAOS_REPO="coratia/coratiaos-core"
+CORATIAOS_REPO="adarshnemesis/coratiaos-core"
 
 echo "=============================================="
 echo "  CoratiaOS Installer"
@@ -63,7 +63,7 @@ if [ ! -f /root/.config/coratiaos/startup.json ]; then
     cat > /root/.config/coratiaos/startup.json <<'EOF'
 {
     "core": {
-        "image": "coratia/coratiaos-core",
+        "image": "adarshnemesis/coratiaos-core",
         "tag": "stable",
         "network": "host",
         "privileged": true,

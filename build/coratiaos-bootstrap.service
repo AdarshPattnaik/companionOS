@@ -1,0 +1,17 @@
+[Unit]
+Description=CoratiaOS Bootstrap - ROV Operating System
+Documentation=https://github.com/coratia/CoratiaOS
+After=docker.service network-online.target
+Requires=docker.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/python3 /opt/coratiaos/bootstrap/main.py
+Restart=always
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

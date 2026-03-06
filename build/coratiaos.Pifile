@@ -65,17 +65,9 @@ RUN systemctl enable docker || true
 RUN pip3 install --no-cache-dir docker requests
 
 # ── Network Configuration: Static IP for tether ──
-RUN cat >> /etc/dhcpcd.conf <<'DHCPEOF'
-
-# CoratiaOS tether interface — ROV communicates at 192.168.2.2
-interface eth0
-static ip_address=192.168.2.2/24
-static routers=192.168.2.1
-static domain_name_servers=8.8.8.8 8.8.4.4
-
-interface usb0
-static ip_address=192.168.2.2/24
-DHCPEOF
+INSTALL build/dhcpcd-coratiaos.conf /tmp/dhcpcd-coratiaos.conf
+RUN cat /tmp/dhcpcd-coratiaos.conf >> /etc/dhcpcd.conf
+RUN rm /tmp/dhcpcd-coratiaos.conf
 
 # ── Avahi/mDNS: coratiaos.local ──
 RUN sed -i 's/host-name=.*/host-name=coratiaos/' /etc/avahi/avahi-daemon.conf 2>/dev/null || true
@@ -98,51 +90,18 @@ RUN mkdir -p /usr/coratiaos/userdata
 RUN mkdir -p /usr/coratiaos/config
 
 RUN mkdir -p /opt/coratiaos
-# We copy the tar file into the image. If it doesn't exist in the host build context,
-# pimod will skip or fail depending on config. But to be safe, we'll just run
-# a script that conditionally loads it if the file was successfully copied.
-COPY build/docker-image/coratiaos-core.tar /opt/coratiaos/coratiaos-core.tar || true
+
+# ── Load Docker image if pre-built (optional — file may not exist) ──
 RUN bash -c "if [ -f /opt/coratiaos/coratiaos-core.tar ]; then docker load -i /opt/coratiaos/coratiaos-core.tar && rm /opt/coratiaos/coratiaos-core.tar; fi"
 
-# ── Systemd Service ──
-RUN cat > /etc/systemd/system/coratiaos-bootstrap.service <<'SVCEOF'
-[Unit]
-Description=CoratiaOS Bootstrap — ROV Operating System
-Documentation=https://github.com/coratia/CoratiaOS
-After=docker.service network-online.target
-Requires=docker.service
-Wants=network-online.target
-
-[Service]
-Type=simple
-ExecStart=/usr/bin/python3 /opt/coratiaos/bootstrap/main.py
-Restart=always
-RestartSec=10
-StandardOutput=journal
-StandardError=journal
-
-[Install]
-WantedBy=multi-user.target
-SVCEOF
-
-RUN systemctl enable coratiaos-bootstrap.service
+# ── Systemd Service (use INSTALL — pimod cannot parse heredocs) ──
+INSTALL build/coratiaos-bootstrap.service /etc/systemd/system/coratiaos-bootstrap.service
+RUN systemctl enable coratiaos-bootstrap.service || true
 
 # ── MOTD / Welcome message ──
-RUN cat > /etc/motd <<'MOTDEOF'
-
-   _____                 _   _        ____   _____ 
-  / ____|               | | (_)      / __ \ / ____|
- | |     ___  _ __ __ _ | |_ _  __ _| |  | | (___  
- | |    / _ \| '__/ _` || __| |/ _` | |  | |\___ \ 
- | |___| (_) | | | (_| || |_| | (_| | |__| |____) |
-  \_____\___/|_|  \__,_| \__|_|\__,_|\____/|_____/ 
-                                                     
-  CoratiaOS v1.0.0 — The ROV Operating System by Coratia
-  Dashboard: http://192.168.2.2
-  SSH: pi@192.168.2.2 (password: coratiaos)
-
-MOTDEOF
+INSTALL build/motd /etc/motd
 
 # ── Cleanup ──
 RUN apt-get clean
 RUN rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+

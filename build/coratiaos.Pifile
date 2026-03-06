@@ -91,10 +91,12 @@ RUN mkdir -p /var/logs/coratiaos
 RUN mkdir -p /usr/coratiaos/userdata
 RUN mkdir -p /usr/coratiaos/config
 
-# ── Load Docker image if pre-built ──
-# If a pre-built Docker image tar is available, load it to avoid
-# needing an internet connection on first boot
-RUN test -f /opt/coratiaos/coratiaos-core.tar && docker load < /opt/coratiaos/coratiaos-core.tar && rm /opt/coratiaos/coratiaos-core.tar || true
+RUN mkdir -p /opt/coratiaos
+# We copy the tar file into the image. If it doesn't exist in the host build context,
+# pimod will skip or fail depending on config. But to be safe, we'll just run
+# a script that conditionally loads it if the file was successfully copied.
+COPY build/docker-image/coratiaos-core.tar /opt/coratiaos/coratiaos-core.tar || true
+RUN if [ -f /opt/coratiaos/coratiaos-core.tar ]; then docker load -i /opt/coratiaos/coratiaos-core.tar && rm /opt/coratiaos/coratiaos-core.tar; fi || true
 
 # ── Systemd Service ──
 RUN cat > /etc/systemd/system/coratiaos-bootstrap.service <<'SVCEOF'

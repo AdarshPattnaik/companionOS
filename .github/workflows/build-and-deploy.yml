@@ -101,7 +101,8 @@ jobs:
             zerofree \
             wget \
             xz-utils \
-            unzip
+            unzip \
+            units
 
       - name: Clone pimod
         run: git clone --depth 1 https://github.com/Nature40/pimod.git /tmp/pimod

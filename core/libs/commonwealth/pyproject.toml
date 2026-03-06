@@ -1,0 +1,19 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "commonwealth"
+version = "1.0.0"
+description = "CoratiaOS shared library — settings, utilities, MAVLink helpers"
+requires-python = ">=3.11"
+dependencies = [
+    "pydantic>=2.0",
+    "loguru",
+    "aiohttp",
+    "fastapi",
+    "psutil",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]

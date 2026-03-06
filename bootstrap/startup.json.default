@@ -1,0 +1,30 @@
+{
+    "core": {
+        "image": "coratia/coratiaos-core",
+        "tag": "stable",
+        "network": "host",
+        "privileged": true,
+        "binds": {
+            "/run/udev": {
+                "bind": "/run/udev",
+                "mode": "ro"
+            },
+            "/var/run/docker.sock": {
+                "bind": "/var/run/docker.sock",
+                "mode": "rw"
+            },
+            "/root/.config/coratiaos": {
+                "bind": "/root/.config/coratiaos",
+                "mode": "rw"
+            },
+            "/var/logs/coratiaos": {
+                "bind": "/var/logs/coratiaos",
+                "mode": "rw"
+            },
+            "/usr/coratiaos": {
+                "bind": "/usr/coratiaos",
+                "mode": "rw"
+            }
+        }
+    }
+}

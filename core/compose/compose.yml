@@ -1,0 +1,31 @@
+# ============================================================
+# CoratiaOS — Docker Compose for Development
+# ============================================================
+# Use: cd core/compose && docker compose up
+# ============================================================
+
+version: "3.8"
+
+services:
+  coratiaos-core:
+    image: coratia/coratiaos-core:local
+    build:
+      context: ../../
+      dockerfile: core/Dockerfile
+    container_name: coratiaos-core
+    restart: unless-stopped
+    network_mode: host
+    privileged: true
+    environment:
+      - CORATIAOS_DISABLE_SERVICES=true
+      - CORATIAOS_DISABLE_STARTUP_UPDATE=true
+      # Uncomment for full system control:
+      # - SSH_USER=pi
+      # - SSH_PASSWORD=raspberry
+    volumes:
+      - ./workspace/coratiaos:/root/.config/coratiaos
+      - ./workspace/config:/usr/coratiaos/config
+      - ./workspace/logs:/var/logs/coratiaos
+      - ./workspace/userdata:/usr/coratiaos/userdata
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /run/udev:/run/udev:ro

@@ -1,0 +1,143 @@
+# ============================================================
+# CoratiaOS — Pimod Build File
+# Generates a flashable Raspberry Pi 4 image with CoratiaOS
+# 
+# Prerequisites: Linux with pimod, Docker, qemu-user-static
+# Usage: sudo pimod.sh build/coratiaos.Pifile
+# Output: coratiaos.img → zip for flashing
+# ============================================================
+
+FROM https://downloads.raspberrypi.org/raspios_lite_armhf/images/raspios_lite_armhf-2022-09-26/2022-09-22-raspios-bullseye-armhf-lite.img.xz
+
+PUMP 3500M
+
+# ── System Setup ──
+RUN bash -c 'echo "coratiaos" > /etc/hostname'
+RUN sed -i 's/127.0.1.1.*raspberrypi/127.0.1.1\tcoratiaos/' /etc/hosts
+RUN bash -c 'echo "pi:coratiaos" | chpasswd'
+
+# Enable SSH on first boot
+RUN touch /boot/ssh
+
+# ── Locale and timezone ──
+RUN raspi-config nonint do_change_locale en_US.UTF-8
+RUN ln -sf /usr/share/zoneinfo/UTC /etc/localtime
+
+# ── Enable I2C, SPI, Serial ──
+RUN raspi-config nonint do_i2c 0
+RUN raspi-config nonint do_spi 0
+RUN raspi-config nonint do_serial 2
+
+# ── Disable screen blanking ──
+RUN raspi-config nonint do_blanking 1
+
+# ── Install base dependencies ──
+RUN apt-get update
+RUN apt-get install -y --no-install-recommends \
+    ca-certificates \
+    curl \
+    gnupg \
+    lsb-release \
+    git \
+    screen \
+    i2c-tools \
+    python3 \
+    python3-pip \
+    libffi-dev \
+    dnsmasq \
+    dhcpcd5 \
+    avahi-daemon \
+    iputils-ping \
+    net-tools
+
+# ── Install Docker ──
+RUN curl -fsSL https://get.docker.com | sh
+RUN usermod -aG docker pi
+RUN systemctl enable docker
+
+# ── Install Python deps for bootstrap ──
+RUN pip3 install --no-cache-dir docker requests
+
+# ── Network Configuration: Static IP for tether ──
+RUN cat >> /etc/dhcpcd.conf <<'DHCPEOF'
+
+# CoratiaOS tether interface — ROV communicates at 192.168.2.2
+interface eth0
+static ip_address=192.168.2.2/24
+static routers=192.168.2.1
+static domain_name_servers=8.8.8.8 8.8.4.4
+
+interface usb0
+static ip_address=192.168.2.2/24
+DHCPEOF
+
+# ── Avahi/mDNS: coratiaos.local ──
+RUN sed -i 's/host-name=.*/host-name=coratiaos/' /etc/avahi/avahi-daemon.conf 2>/dev/null || true
+
+# ── Install CoratiaOS Bootstrap ──
+RUN mkdir -p /opt/coratiaos/bootstrap/bootstrap
+
+INSTALL bootstrap/main.py /opt/coratiaos/bootstrap/main.py
+INSTALL bootstrap/bootstrap/__init__.py /opt/coratiaos/bootstrap/bootstrap/__init__.py
+INSTALL bootstrap/bootstrap/bootstrap.py /opt/coratiaos/bootstrap/bootstrap/bootstrap.py
+INSTALL bootstrap/startup.json.default /opt/coratiaos/bootstrap/startup.json.default
+
+# Default startup config
+RUN mkdir -p /root/.config/coratiaos
+RUN cp /opt/coratiaos/bootstrap/startup.json.default /root/.config/coratiaos/startup.json
+
+# Create data directories
+RUN mkdir -p /var/logs/coratiaos
+RUN mkdir -p /usr/coratiaos/userdata
+RUN mkdir -p /usr/coratiaos/config
+
+# ── Load Docker image if pre-built ──
+# If a pre-built Docker image tar is available, load it to avoid
+# needing an internet connection on first boot
+RUN if [ -f /opt/coratiaos/coratiaos-core.tar ]; then \
+        docker load < /opt/coratiaos/coratiaos-core.tar && \
+        rm /opt/coratiaos/coratiaos-core.tar; \
+    fi
+
+# ── Systemd Service ──
+RUN cat > /etc/systemd/system/coratiaos-bootstrap.service <<'SVCEOF'
+[Unit]
+Description=CoratiaOS Bootstrap — ROV Operating System
+Documentation=https://github.com/coratia/CoratiaOS
+After=docker.service network-online.target
+Requires=docker.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/python3 /opt/coratiaos/bootstrap/main.py
+Restart=always
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target
+SVCEOF
+
+RUN systemctl enable coratiaos-bootstrap.service
+
+# ── MOTD / Welcome message ──
+RUN cat > /etc/motd <<'MOTDEOF'
+
+   _____                 _   _        ____   _____ 
+  / ____|               | | (_)      / __ \ / ____|
+ | |     ___  _ __ __ _ | |_ _  __ _| |  | | (___  
+ | |    / _ \| '__/ _` || __| |/ _` | |  | |\___ \ 
+ | |___| (_) | | | (_| || |_| | (_| | |__| |____) |
+  \_____\___/|_|  \__,_| \__|_|\__,_|\____/|_____/ 
+                                                     
+  CoratiaOS v1.0.0 — The ROV Operating System by Coratia
+  Dashboard: http://192.168.2.2
+  SSH: pi@192.168.2.2 (password: coratiaos)
+
+MOTDEOF
+
+# ── Cleanup ──
+RUN apt-get clean
+RUN rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*

@@ -51,7 +51,10 @@ RUN apt-get install -y --no-install-recommends \
     net-tools
 
 # ── Install Docker ──
-RUN apt-get update && apt-get install -y --no-install-recommends docker.io
+# Remove conflicting native packages first
+RUN apt-get remove -y docker.io docker-doc docker-compose podman-docker containerd runc || true
+RUN curl -fsSL https://get.docker.com | sh || true
+RUN groupadd docker || true
 RUN usermod -aG docker pi
 RUN systemctl enable docker
 
